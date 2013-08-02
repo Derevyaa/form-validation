@@ -15,7 +15,7 @@ public abstract class BooleanRule extends Rule {
 	}
 	
 	@Override
-	public Rule newInstance(Object value, String message) {
+	public Rule newInstance(Object value, String message) throws RuleException {
 		if (!Boolean.valueOf(value.toString())) {
 			return null;
 		} else {
