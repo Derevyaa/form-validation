@@ -6,16 +6,8 @@ public class Required extends BooleanRule {
 		super("This field is required.");
 	}
 	
-	public boolean check(String[] values) {
-		if (values == null || values.length == 0) {
-			return false;
-		}
-		for (String s : values) {
-			if (s != null && s.length() > 0) {
-				return true;
-			}
-		}
-		return false;
+	public boolean check(String value) {
+		return value != null && value.length() > 0;
 	}
 	
 }

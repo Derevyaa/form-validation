@@ -10,18 +10,13 @@ public class Max extends Rule {
 		super("Please enter a value less than or equal to {0}.");
 	}
 	
-	public boolean check(String[] values) {
-		for (String s : values) {
-			try {
-				BigDecimal v = new BigDecimal(s);
-				if (this.num.compareTo(v) > 0) {
-					return false;
-				}
-			} catch (NumberFormatException e) {
-				return false;
-			}
+	public boolean check(String value) {
+		try {
+			BigDecimal v = new BigDecimal(value);
+			return this.num.compareTo(v) >= 0;
+		} catch (NumberFormatException e) {
+			return false;
 		}
-		return true;
 	}
 	
 	public void build(Object value) throws RuleException {

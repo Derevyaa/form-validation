@@ -11,7 +11,24 @@ public abstract class Rule implements Cloneable {
 	public boolean isBooleanRule() { return false;}
 	
 	public abstract void build(Object value) throws RuleException;
-	public abstract boolean check(String[] values) throws FormValidationException;
+	
+	public String validate(Map<String, String[]> map, String[] values) throws FormValidationException {
+		return check(values) ? null : getMessage();
+	}
+	
+	public boolean check(String[] values) throws FormValidationException {
+		if (values == null || values.length == 0) {
+			return false;
+		}
+		for (String s : values) {
+			if (!check(s)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public abstract boolean check(String value) throws FormValidationException;
 	
 	protected Rule(String message) {
 		this.message = message;
@@ -37,7 +54,4 @@ public abstract class Rule implements Cloneable {
 		}
 	}
 	
-	public String validate(Map<String, String[]> map, String[] values) throws FormValidationException {
-		return check(values) ? null : getMessage();
-	}
 }

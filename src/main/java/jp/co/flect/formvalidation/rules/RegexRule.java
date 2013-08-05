@@ -40,12 +40,7 @@ public class RegexRule extends Rule {
 		}
 	}
 	
-	public boolean check(String[] values) throws FormValidationException {
-		for (String s: values) {
-			if (!this.pattern.matcher(s).matches()) {
-				return false;
-			}
-		}
-		return true;
+	public boolean check(String value) throws FormValidationException {
+		return this.pattern.matcher(value).matches();
 	}
 }

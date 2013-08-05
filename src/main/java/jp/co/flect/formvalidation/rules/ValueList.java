@@ -12,15 +12,11 @@ public class ValueList extends Rule {
 	}
 	
 	public void build(Object value) {
+		throw new UnsupportedOperationException();
 	}
 	
-	public boolean check(String[] values) {
-		for (String s : values) {
-			if (this.valueMap.get(s) == null) {
-				return false;
-			}
-		}
-		return true;
+	public boolean check(String value) {
+		return this.valueMap.get(value) != null;
 	}
 	
 	public String validate(Map<String, String[]> map, String[] values) {
