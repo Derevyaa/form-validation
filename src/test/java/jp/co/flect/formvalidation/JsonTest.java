@@ -23,9 +23,12 @@ public class JsonTest {
 		
 		Map<String, String[]> map = new HashMap<String, String[]>();
 		ValidationResult result = form.validate(map);
-		assertTrue(result.hasError());
+		assertTrue(result.hasErrors());
 		for (Map.Entry<FormItem, List<String>> entry : result.getErrors().entrySet()) {
 			System.out.println(entry.getKey().getLabel() + ": " + entry.getValue());
+		}
+		for (String msg : result.getCommonErrors()) {
+			System.out.println("Common: " + msg);
 		}
 	}
 }

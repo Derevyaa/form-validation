@@ -6,10 +6,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import jp.co.flect.json.JsonUtils;
 import jp.co.flect.json.JsonException;
+import jp.co.flect.formvalidation.rules.Rule;
+import jp.co.flect.formvalidation.rules.RuleManager;
 
 public class FormDefinition {
 	
 	private LinkedHashMap<String, FormItem> items;
+	private List<Rule> rules;
 	
 	public List<FormItem> getItems() { return new ArrayList<FormItem>(this.items.values());}
 	public void setItems(List<FormItem> list) { 
@@ -36,7 +39,22 @@ public class FormDefinition {
 				ret.addError(item, msgs);
 			}
 		}
+		if (this.rules != null) {
+			for (Rule rule : this.rules) {
+				String msg = rule.validate(map, null);
+				if (msg != null) {
+					ret.addCommonError(msg);
+				}
+			}
+		}
 		return ret;
+	}
+	
+	public void addRule(Rule rule) {
+		if (this.rules == null) {
+			this.rules = new ArrayList<Rule>();
+		}
+		this.rules.add(rule);
 	}
 	
 	public static FormDefinition fromJson(String json) throws FormValidationException {
@@ -57,9 +75,44 @@ public class FormDefinition {
 					form.addItem(item);
 				}
 			}
+			Map<String, Object> rules = (Map<String, Object>)map.get("rules");
+			if (rules != null) {
+				buildRules(form, rules);
+			}
 			return form;
 		} catch (JsonException e) {
 			throw new FormValidationException(e);
+		}
+	}
+	
+	private static void buildRules(FormDefinition form, Map<String, Object> map) throws FormValidationException {
+		for (Map.Entry<String, Object> entry : map.entrySet()) {
+			String name = entry.getKey();
+			Rule rule = RuleManager.getRule(name);
+			if (rule != null) {
+				String message = null;
+				Object value = null;
+				if (entry.getValue() instanceof Map) {
+					Map ruleMap = (Map)entry.getValue();
+					message = (String)ruleMap.get("message");
+					value = ruleMap.get("value");
+					if (value == null) {
+						value = ruleMap;
+					}
+				} else if (entry.getValue() instanceof String) {
+					if (rule.isBooleanRule()) {
+						message = (String)entry.getValue();
+						value = true;
+					} else {
+						value = entry.getValue();
+					}
+				} else {
+					value = entry.getValue();
+				}
+				form.addRule(rule.newInstance(value, message));
+			} else if (entry.getValue() instanceof Map) {
+				buildRules(form, (Map<String, Object>)entry.getValue());
+			}
 		}
 	}
 }

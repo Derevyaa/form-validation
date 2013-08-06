@@ -133,6 +133,9 @@ public class FormItem {
 						Map ruleMap = (Map)entry.getValue();
 						message = (String)ruleMap.get("message");
 						value = ruleMap.get("value");
+						if (value == null) {
+							value = ruleMap;
+						}
 					} else if (entry.getValue() instanceof String) {
 						if (rule.isBooleanRule()) {
 							message = (String)entry.getValue();

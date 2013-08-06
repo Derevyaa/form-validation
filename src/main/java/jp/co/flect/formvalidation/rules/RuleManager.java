@@ -29,6 +29,7 @@ public class RuleManager {
 		addRule("tel", new Tel());
 		addRule("regexp", new RegexRule());
 		addRule("requiredIf", new RequiredIf());
+		addRule("requiredOne", new RequiredOne());
 	}
 	
 	public static void addRule(String name, Rule rule) {
