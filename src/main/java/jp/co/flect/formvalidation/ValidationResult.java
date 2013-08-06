@@ -1,29 +1,19 @@
 package jp.co.flect.formvalidation;
 
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class ValidationResult {
 	
-	private List<String> msgs = new ArrayList<String>();
+	private LinkedHashMap<FormItem, List<String>> errors = new LinkedHashMap<FormItem, List<String>>();
 	
-	public void addMessage(String s) {
-		if (s != null && !msgs.contains(s)) {
-			msgs.add(s);
-		}
+	public void addError(FormItem item, List<String> msgs) {
+		this.errors.put(item, msgs);
 	}
 	
-	public void addMessages(List<String> list) {
-		if (list != null) {
-			for (String s : list) {
-				addMessage(s);
-			}
-		}
-	}
+	public LinkedHashMap<FormItem, List<String>> getErrors() { return this.errors;}
 	
-	public List<String> getMessages() { return this.msgs;}
+	public boolean hasError() { return this.errors.size() > 0;}
 	
-	public boolean hasError() { return this.msgs.size() > 0;}
-	
-	public boolean isSuccess() { return this.msgs.size() == 0;}
+	public boolean isSuccess() { return this.errors.size() == 0;}
 }

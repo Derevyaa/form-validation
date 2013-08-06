@@ -33,7 +33,7 @@ public class FormDefinition {
 			String[] values = map.get(item.getName());
 			List<String> msgs = item.validate(map, values);
 			if (msgs != null && msgs.size() > 0) {
-				ret.addMessages(msgs);
+				ret.addError(item, msgs);
 			}
 		}
 		return ret;

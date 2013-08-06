@@ -149,5 +149,12 @@ public class FormItem {
 		}
 	}
 	
+	public int hashCode() { return this.name.hashCode();}
+	public boolean equals(Object o) {
+		if (o instanceof FormItem) {
+			return ((FormItem)o).name.equals(this.name);
+		}
+		return false;
+	}
 }
 
