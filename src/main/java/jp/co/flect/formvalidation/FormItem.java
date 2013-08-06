@@ -46,7 +46,7 @@ public class FormItem {
 	
 	public List<String> validate(Map<String, String[]> map, String[] values) throws FormValidationException {
 		List<String> list = new ArrayList<String>();
-		if (isNull(values)) {
+		if (Rule.isEmpty(values)) {
 			String msg = isRequired(map);
 			if (msg != null) {
 				list.add(msg);
@@ -149,16 +149,5 @@ public class FormItem {
 		}
 	}
 	
-	private static boolean isNull(String[] strs) {
-		if (strs == null || strs.length == 0) {
-			return true;
-		}
-		for (String s : strs) {
-			if (s != null && s.length() > 0) {
-				return false;
-			}
-		}
-		return true;
-	}
 }
 

@@ -220,4 +220,37 @@ public class RuleTest {
 		assertTrue(test(rule, "3"));
 		assertFalse(test(rule, "4"));
 	}
+	
+	@Test 
+	public void requiredIf1() throws Exception {
+		Map<String, String[]> map = makeTestData();
+		
+		RequiredIf rule = new RequiredIf();
+		rule.build("hoge==fuga || name==*");
+		assertNotNull(rule.validate(map, null));
+	}
+	
+	@Test 
+	public void requiredIf2() throws Exception {
+		Map<String, String[]> map = makeTestData();
+		
+		RequiredIf rule = new RequiredIf();
+		rule.build("hoge==fuga && name==*");
+		assertNull(rule.validate(map, null));
+	}
+	
+	@Test 
+	public void requiredIf3() throws Exception {
+		Map<String, String[]> map = makeTestData();
+		
+		RequiredIf rule = new RequiredIf();
+		rule.build("name==hoge");
+		assertNotNull(rule.validate(map, null));
+	}
+	
+	private static Map<String, String[]> makeTestData() {
+		Map<String, String[]> map = new HashMap<String, String[]>();
+		map.put("name", new String[] { "hoge"});
+		return map;
+	}
 }

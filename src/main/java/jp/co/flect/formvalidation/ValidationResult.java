@@ -24,4 +24,6 @@ public class ValidationResult {
 	public List<String> getMessages() { return this.msgs;}
 	
 	public boolean hasError() { return this.msgs.size() > 0;}
+	
+	public boolean isSuccess() { return this.msgs.size() == 0;}
 }

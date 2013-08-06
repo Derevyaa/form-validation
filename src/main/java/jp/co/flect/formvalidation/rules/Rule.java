@@ -6,6 +6,18 @@ import jp.co.flect.formvalidation.FormValidationException;
 
 public abstract class Rule implements Cloneable {
 	
+	public static boolean isEmpty(String[] strs) {
+		if (strs == null || strs.length == 0) {
+			return true;
+		}
+		for (String s : strs) {
+			if (s != null && s.length() > 0) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	private String message;
 	
 	public boolean isBooleanRule() { return false;}
