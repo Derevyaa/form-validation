@@ -1,8 +1,10 @@
 package jp.co.flect.formvalidation;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
+import jp.co.flect.json.JsonUtils;
 
 public class ValidationResult {
 	
@@ -25,4 +27,20 @@ public class ValidationResult {
 	public boolean hasErrors() { return this.errors.size() + this.commonErrors.size() > 0;}
 	
 	public boolean isSuccess() { return !hasErrors();}
+	
+	public String toJson() {
+		LinkedHashMap<String, Object> map = new LinkedHashMap<String, Object>();
+		map.put("success", isSuccess());
+		if (hasErrors()) {
+			Map<String, List<String>> msgMap = new LinkedHashMap<String, List<String>>();
+			for (Map.Entry<FormItem, List<String>> entry : this.errors.entrySet()) {
+				msgMap.put(entry.getKey().getName(), entry.getValue());
+			}
+			if (this.commonErrors.size() > 0) {
+				msgMap.put("#", this.commonErrors);
+			}
+			map.put("messages", msgMap);
+		}
+		return JsonUtils.toJson(map);
+	}
 }
