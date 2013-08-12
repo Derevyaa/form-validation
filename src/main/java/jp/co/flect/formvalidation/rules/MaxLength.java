@@ -26,6 +26,7 @@ public class MaxLength extends Rule {
 	public void build(Object value) throws RuleException {
 		try {
 			this.len = Integer.parseInt(value.toString());
+			setMessageParams(this.len);
 		} catch (NumberFormatException e) {
 			throw new RuleException("Invalid length: " + value);
 		}

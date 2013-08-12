@@ -28,5 +28,6 @@ public class Min extends Rule {
 		} catch (NumberFormatException e) {
 		}
 		this.str = value.toString();
+		setMessageParams(this.str);
 	}
 }

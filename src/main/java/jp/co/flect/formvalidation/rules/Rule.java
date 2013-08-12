@@ -19,6 +19,7 @@ public abstract class Rule implements Cloneable {
 	}
 	
 	private String message;
+	private Object[] messageParams = null;
 	
 	public boolean isBooleanRule() { return false;}
 	
@@ -46,8 +47,19 @@ public abstract class Rule implements Cloneable {
 		this.message = message;
 	}
 	
-	public String getMessage() { return this.message;}
-	public void setMessage(String s) { this.message = s;}
+	public String getMessage() { 
+		String ret = this.message;
+		if (this.messageParams != null) {
+			ret = MessageFormat.format(ret, this.messageParams);
+		}
+		return ret;
+	}
+	
+	public String getRawMessage() { return this.message;}
+	public void setRawMessage(String s) { this.message = s;}
+	
+	public Object[] getMessageParams() { return this.messageParams;}
+	public void setMessageParams(Object... v) { this.messageParams = v;}
 	
 	public String getFormattedMessage(Object... args) {
 		return MessageFormat.format(getMessage(), args);
@@ -57,7 +69,7 @@ public abstract class Rule implements Cloneable {
 		try {
 			Rule ret = (Rule)super.clone();
 			if (message != null) {
-				ret.setMessage(message);
+				ret.setRawMessage(message);
 			}
 			ret.build(value);
 			return ret;

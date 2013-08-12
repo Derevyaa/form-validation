@@ -25,6 +25,7 @@ public class RegexRule extends Rule {
 		if (this.pattern == null) {
 			try {
 				this.pattern = Pattern.compile(value.toString());
+				setMessageParams(value.toString());
 			} catch (PatternSyntaxException e) {
 				throw new RuleException(e);
 			}

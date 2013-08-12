@@ -1,5 +1,6 @@
 package jp.co.flect.formvalidation.rules;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import jp.co.flect.formvalidation.FormValidationException;
@@ -20,6 +21,7 @@ public class RequiredOne extends Rule {
 		} else {
 			this.items = value.toString().split(",");
 		}
+		setMessageParams(Arrays.toString(this.items));
 	}
 	
 	@Override
