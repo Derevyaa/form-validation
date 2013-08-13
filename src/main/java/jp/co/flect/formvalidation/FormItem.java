@@ -3,6 +3,7 @@ package jp.co.flect.formvalidation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import jp.co.flect.formvalidation.rules.Rule;
 import jp.co.flect.formvalidation.rules.Required;
@@ -20,6 +21,7 @@ public class FormItem {
 	private Required required;
 	private RequiredIf requiredIf;
 	private List<Rule> rules = new ArrayList<Rule>();
+	private Map<String, String> sfMap = null;
 	
 	public FormItem(String name, String type) {
 		this.name = name;
@@ -72,7 +74,18 @@ public class FormItem {
 		}
 	}
 	
-	public static FormItem fromMap(String name, Map<String, Object> origin) throws FormValidationException {
+	public LinkedHashMap<String, String> getValues() {
+		ValueList vl = null;
+		for (Rule rule : this.rules) {
+			if (rule instanceof ValueList) { 
+				vl = (ValueList)rule;
+				break;
+			}
+		}
+		return vl == null ? null : vl.getValues();
+	}
+	
+	public static FormItem fromMap(String name, Map<String, Object> origin, boolean includeSalesforceInfo) throws FormValidationException {
 		Map<String, Object> map = new LinkedHashMap<String, Object>(origin);
 		String type = (String)map.remove("type");
 		if (type == null) {
@@ -89,11 +102,14 @@ public class FormItem {
 			makeValues(values, item);
 		}
 		makeRules(map, item);
+		if (includeSalesforceInfo) {
+			makeSalesforce(map, item);
+		}
 		return item;
 	}
 	
 	private static void makeValues(List values, FormItem item) {
-		Map<String, String> map = new LinkedHashMap<String, String>();
+		LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
 		for (Object o : values) {
 			String value = null;
 			String text = null;
@@ -151,6 +167,33 @@ public class FormItem {
 			}
 		}
 	}
+	
+	private static Object getString(Map<String, Object> origin, String key, String category) {
+		if (category != null && origin.get(category) != null) {
+			Map<String, Object> catMap = (Map<String, Object>)origin.get(category);
+			if (catMap.get(key) != null) {
+				return catMap.get(key).toString();
+			}
+		}
+		Object ret = origin.get(key);
+		return ret == null ? null : ret.toString();
+	}
+	
+	private static void makeSalesforce(Map<String, Object> origin, FormItem item) {
+		Map<String, String> map = new HashMap<String, String>();
+		if (origin.get("salesforce") != null) {
+			Map<String, Object> sfMap = (Map<String, Object>)origin.get("salesforce");
+			for (Map.Entry<String, Object> entry : sfMap.entrySet()) {
+				map.put(entry.getKey(), entry.getValue().toString());
+			}
+		}
+		if ("select".equals(item.getType()) && getString(origin, "multiple", "attrs") != null) {
+			item.type = "multiSelect";
+		}
+		item.sfMap = map;
+	}
+	
+	public Map<String, String> getSalesforceMap() { return this.sfMap;}
 	
 	public int hashCode() { return this.name.hashCode();}
 	public boolean equals(Object o) {

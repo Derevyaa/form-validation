@@ -1,6 +1,7 @@
 package jp.co.flect.formvalidation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -83,7 +84,24 @@ public class FormDefinition {
 		this.rules.add(rule);
 	}
 	
+	public FormItem getItem(String name) {
+		for (Map.Entry<String, FormItem> entry : this.items.entrySet()) {
+			if (entry.getKey().equalsIgnoreCase(name)) {
+				return entry.getValue();
+			}
+		}
+		return null;
+	}
+	
+	public List<Rule> getRules() {
+		return this.rules == null ? Collections.<Rule>emptyList() : this.rules;
+	}
+	
 	public static FormDefinition fromJson(String json) throws FormValidationException {
+		return fromJson(json, false);
+	}
+	
+	public static FormDefinition fromJson(String json, boolean includeSalesforceInfo) throws FormValidationException {
 		try {
 			LinkedHashMap<String, Object> map = JsonUtils.fromJson(json, LinkedHashMap.class);
 			
@@ -96,7 +114,7 @@ public class FormDefinition {
 					if (entry.getValue() instanceof String) {
 						item = new FormItem(name, (String)entry.getValue());
 					} else if (entry.getValue() instanceof Map) {
-						item = FormItem.fromMap(name, (Map<String, Object>)entry.getValue());
+						item = FormItem.fromMap(name, (Map<String, Object>)entry.getValue(), includeSalesforceInfo);
 					}
 					form.addItem(item);
 				}

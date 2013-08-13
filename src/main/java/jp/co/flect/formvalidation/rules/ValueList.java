@@ -1,12 +1,13 @@
 package jp.co.flect.formvalidation.rules;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ValueList extends Rule {
 	
-	private Map<String, String> valueMap;
+	private LinkedHashMap<String, String> valueMap;
 	
-	public ValueList(Map<String, String> map) {
+	public ValueList(LinkedHashMap<String, String> map) {
 		super("Invalid value: {0}");
 		this.valueMap = map;
 	}
@@ -14,6 +15,8 @@ public class ValueList extends Rule {
 	public void build(Object value) {
 		throw new UnsupportedOperationException();
 	}
+	
+	public LinkedHashMap<String, String> getValues() { return this.valueMap;}
 	
 	public boolean check(String value) {
 		return this.valueMap.get(value) != null;

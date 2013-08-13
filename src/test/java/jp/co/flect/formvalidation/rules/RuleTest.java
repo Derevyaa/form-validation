@@ -9,6 +9,7 @@ import static org.junit.Assert.assertNull;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class RuleTest {
 	
@@ -210,7 +211,7 @@ public class RuleTest {
 	
 	@Test 
 	public void valueList() throws Exception {
-		Map<String, String> map = new HashMap<String, String>();
+		LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
 		map.put("1", "aaa");
 		map.put("2", "bbb");
 		map.put("3", "ccc");
