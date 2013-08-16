@@ -1,6 +1,7 @@
 package jp.co.flect.formvalidation.rules;
 
 import java.math.BigDecimal;
+import jp.co.flect.formvalidation.FormItem;
 
 public class Min extends Rule {
 	
@@ -29,5 +30,16 @@ public class Min extends Rule {
 		}
 		this.str = value.toString();
 		setMessageParams(this.str);
+	}
+	
+	@Override
+	protected String doGetSalesforceErrorCondition(FormItem item, String name) {
+		if (this.num != null) {
+			return name + "<" + this.num;
+		} else if ("date".equals(item.getType())) {
+			return name + "<DATEVALUE(\"" + this.str + "\")";
+		} else {
+			return name + "<\"" + this.str + "\"";
+		}
 	}
 }

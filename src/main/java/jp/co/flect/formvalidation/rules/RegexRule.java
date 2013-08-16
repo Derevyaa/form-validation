@@ -3,6 +3,7 @@ package jp.co.flect.formvalidation.rules;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import jp.co.flect.formvalidation.FormValidationException;
+import jp.co.flect.formvalidation.FormItem;
 
 public class RegexRule extends Rule {
 	
@@ -43,5 +44,10 @@ public class RegexRule extends Rule {
 	
 	public boolean check(String value) throws FormValidationException {
 		return this.pattern.matcher(value).matches();
+	}
+	
+	@Override
+	protected String doGetSalesforceErrorCondition(FormItem item, String name) {
+		return "NOT(REGEX(" + name + ", \"" + this.pattern.pattern() + "\"))";
 	}
 }

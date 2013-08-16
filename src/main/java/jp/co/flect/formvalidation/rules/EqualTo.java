@@ -2,6 +2,7 @@ package jp.co.flect.formvalidation.rules;
 
 import java.util.Map;
 import jp.co.flect.formvalidation.FormValidationException;
+import jp.co.flect.formvalidation.FormItem;
 
 public class EqualTo extends Rule {
 	
@@ -37,5 +38,10 @@ public class EqualTo extends Rule {
 	
 	public boolean check(String value) throws FormValidationException {
 		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	protected String doGetSalesforceErrorCondition(FormItem item, String name) {
+		return getSalesforceFieldName(this.target) + "=" + name;
 	}
 }

@@ -3,6 +3,7 @@ package jp.co.flect.formvalidation.rules;
 import java.util.Map;
 import java.text.MessageFormat;
 import jp.co.flect.formvalidation.FormValidationException;
+import jp.co.flect.formvalidation.FormItem;
 
 public abstract class Rule implements Cloneable {
 	
@@ -17,6 +18,16 @@ public abstract class Rule implements Cloneable {
 		}
 		return true;
 	}
+	
+	public static String getSalesforceFieldName(String name) {
+		return "name".equalsIgnoreCase(name) ? "Name" : name + "__c";
+	}
+	
+	public String getSalesforceErrorCondition(FormItem item) {
+		return doGetSalesforceErrorCondition(item, item == null ? null : getSalesforceFieldName(item.getName()));
+	}
+	
+	protected abstract String doGetSalesforceErrorCondition(FormItem item, String name);
 	
 	private String message;
 	private Object[] messageParams = null;

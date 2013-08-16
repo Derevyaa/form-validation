@@ -11,6 +11,7 @@ import jp.co.flect.formvalidation.rules.RequiredIf;
 import jp.co.flect.formvalidation.rules.RuleManager;
 import jp.co.flect.formvalidation.rules.RuleException;
 import jp.co.flect.formvalidation.rules.ValueList;
+import jp.co.flect.formvalidation.salesforce.SalesforceObjectBuilder;
 
 public class FormItem {
 	
@@ -29,7 +30,9 @@ public class FormItem {
 	}
 	
 	public String getName() { return this.name;}
+	
 	public String getType() { return this.type;}
+	public void setType(String s) { this.type = s;}
 	
 	public String getLabel() { return this.label;}
 	public void setLabel(String s) { this.label = s;}
@@ -72,6 +75,27 @@ public class FormItem {
 		} else {
 			this.rules.add(rule);
 		}
+	}
+	
+	public List<Rule> getRules() { return this.rules;}
+	
+	public <T extends Rule> boolean hasRule(Class<T> rule) {
+		return getRule(rule) != null;
+	}
+	
+	public <T extends Rule> T getRule(Class<T> rule) {
+		if (rule == Required.class) {
+			return (T)this.required;
+		}
+		if (rule == RequiredIf.class) {
+			return (T)this.requiredIf;
+		}
+		for (Rule r : getRules()) {
+			if (rule.isAssignableFrom(r.getClass())) {
+				return (T)r;
+			}
+		}
+		return null;
 	}
 	
 	public LinkedHashMap<String, String> getValues() {
@@ -168,29 +192,8 @@ public class FormItem {
 		}
 	}
 	
-	private static Object getString(Map<String, Object> origin, String key, String category) {
-		if (category != null && origin.get(category) != null) {
-			Map<String, Object> catMap = (Map<String, Object>)origin.get(category);
-			if (catMap.get(key) != null) {
-				return catMap.get(key).toString();
-			}
-		}
-		Object ret = origin.get(key);
-		return ret == null ? null : ret.toString();
-	}
-	
 	private static void makeSalesforce(Map<String, Object> origin, FormItem item) {
-		Map<String, String> map = new HashMap<String, String>();
-		if (origin.get("salesforce") != null) {
-			Map<String, Object> sfMap = (Map<String, Object>)origin.get("salesforce");
-			for (Map.Entry<String, Object> entry : sfMap.entrySet()) {
-				map.put(entry.getKey(), entry.getValue().toString());
-			}
-		}
-		if ("select".equals(item.getType()) && getString(origin, "multiple", "attrs") != null) {
-			item.type = "multiSelect";
-		}
-		item.sfMap = map;
+		item.sfMap = SalesforceObjectBuilder.buildSalesforceMap(origin, item);
 	}
 	
 	public Map<String, String> getSalesforceMap() { return this.sfMap;}

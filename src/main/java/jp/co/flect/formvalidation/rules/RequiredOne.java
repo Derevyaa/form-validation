@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import jp.co.flect.formvalidation.FormValidationException;
+import jp.co.flect.formvalidation.FormItem;
 
 public class RequiredOne extends Rule {
 	
@@ -43,4 +44,19 @@ public class RequiredOne extends Rule {
 		return getMessage();
 	}
 	
+	@Override
+	protected String doGetSalesforceErrorCondition(FormItem item, String name) {
+		boolean bFirst = true;
+		StringBuilder buf = new StringBuilder();
+		buf.append("AND(");
+		for (String s : this.items) {
+			if (!bFirst) {
+				buf.append(",");
+			}
+			buf.append("ISNULL(" + getSalesforceFieldName(s) + ")");
+			bFirst = false;
+		}
+		buf.append(")");
+		return buf.toString();
+	}
 }

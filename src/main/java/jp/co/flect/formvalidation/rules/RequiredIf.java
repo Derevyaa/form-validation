@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 import java.math.BigDecimal;
+import jp.co.flect.formvalidation.FormItem;
 
 public class RequiredIf extends Rule {
 	
@@ -182,6 +183,7 @@ public class RequiredIf extends Rule {
 	
 	private interface Evaluator {
 		public boolean evaluate(Map<String, String[]> map);
+		public String getSalesforceErrorCondition();
 	}
 	
 	private static class Combine implements Evaluator {
@@ -212,6 +214,20 @@ public class RequiredIf extends Rule {
 			}
 			return bAnd;
 		}
+		
+		public String getSalesforceErrorCondition() {
+			StringBuilder buf = new StringBuilder();
+			buf.append(bAnd ? "AND(" : "OR(");
+			boolean bFirst = true;
+			for (Evaluator expr : this.list) {
+				if (!bFirst) {
+					buf.append(",");
+				}
+				buf.append(expr.getSalesforceErrorCondition());
+			}
+			buf.append(")");
+			return buf.toString();
+		}
 	}
 	
 	private static class Expr implements Evaluator {
@@ -230,6 +246,29 @@ public class RequiredIf extends Rule {
 		public boolean evaluate(Map<String, String[]> map) {
 			String[] targetValues = map.get(this.name);
 			return op.evaluate(targetValues, compareValues);
+		}
+		
+		public String getSalesforceErrorCondition() {
+			if (isEmpty(compareValues)) {
+				String ret = "ISNULL(" + getSalesforceFieldName(name) + ")";
+				if (op instanceof Equal) {
+					return ret;
+				} else if (op instanceof NotEqual) {
+					return "NOT(" + ret + ")";
+				} else {
+					return null;
+				}
+			}
+			String value = compareValues[0];
+			StringBuilder buf = new StringBuilder();
+			buf.append(getSalesforceFieldName(name)).append(op.getValue());
+			try {
+				BigDecimal num = new BigDecimal(value);
+				buf.append(value);
+			} catch (NumberFormatException e) {
+				buf.append("\"").append(value).append("\"");
+			}
+			return buf.toString();
 		}
 	}
 	
@@ -323,4 +362,8 @@ public class RequiredIf extends Rule {
 		return ret;
 	}
 	
+	@Override
+	protected String doGetSalesforceErrorCondition(FormItem item, String name) {
+		return "AND(ISNULL(" + name + ")," + this.evaluator.getSalesforceErrorCondition() + ")";
+	}
 }

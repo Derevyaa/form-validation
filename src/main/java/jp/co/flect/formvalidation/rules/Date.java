@@ -2,6 +2,7 @@ package jp.co.flect.formvalidation.rules;
 
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
+import jp.co.flect.formvalidation.FormItem;
 
 public class Date extends BooleanRule {
 	
@@ -27,4 +28,7 @@ public class Date extends BooleanRule {
 		}
 	}
 	
+	protected String doGetSalesforceErrorCondition(FormItem item, String name) {
+		return null;
+	}
 }

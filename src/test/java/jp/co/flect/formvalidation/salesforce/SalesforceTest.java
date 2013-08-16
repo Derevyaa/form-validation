@@ -28,9 +28,8 @@ public class SalesforceTest {
 		String password = System.getenv().get("SALESFORCE_PASSWORD");
 		String secret = System.getenv().get("SALESFORCE_SECURITY_TOKEN");
 		SalesforceClient client = new SalesforceClient(PARTNER_WSDL);
-		client.getLogger().setLevel(Level.TRACE);
 		client.login(username, password, secret);
-
+		
 		CLIENT = client;
 		META_CLIENT = client.createMetadataClient(METADATA_WSDL);
 
@@ -42,7 +41,9 @@ public class SalesforceTest {
 	@Test 
 	public void test() throws Exception {
 		SalesforceObjectBuilder builder = new SalesforceObjectBuilder(CLIENT, METADATA_WSDL);
+		builder.getLogger().setLevel(Level.TRACE);
 		SalesforceInfo info = new SalesforceInfo("ccc");
+		info.setLabel("FormBuilderテスト");
 		String json = FileUtils.readFileAsString(JSON_FILE);
 		builder.generate(info, json);
 	}

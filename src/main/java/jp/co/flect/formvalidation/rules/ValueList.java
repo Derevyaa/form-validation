@@ -2,6 +2,7 @@ package jp.co.flect.formvalidation.rules;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import jp.co.flect.formvalidation.FormItem;
 
 public class ValueList extends Rule {
 	
@@ -28,6 +29,11 @@ public class ValueList extends Rule {
 				return getFormattedMessage(s);
 			}
 		}
+		return null;
+	}
+	
+	@Override
+	protected String doGetSalesforceErrorCondition(FormItem item, String name) {
 		return null;
 	}
 }

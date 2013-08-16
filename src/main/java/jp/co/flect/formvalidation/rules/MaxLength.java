@@ -2,6 +2,7 @@ package jp.co.flect.formvalidation.rules;
 
 import java.math.BigDecimal;
 import jp.co.flect.formvalidation.FormValidationException;
+import jp.co.flect.formvalidation.FormItem;
 
 public class MaxLength extends Rule {
 	
@@ -10,6 +11,8 @@ public class MaxLength extends Rule {
 	public MaxLength() {
 		super("Please enter no more than {0} characters.");
 	}
+	
+	public int length() { return this.len;}
 	
 	@Override
 	public boolean check(String[] values) throws FormValidationException {
@@ -30,5 +33,10 @@ public class MaxLength extends Rule {
 		} catch (NumberFormatException e) {
 			throw new RuleException("Invalid length: " + value);
 		}
+	}
+	
+	@Override
+	protected String doGetSalesforceErrorCondition(FormItem item, String name) {
+		return "LEN(" + name + ")>" + this.len;
 	}
 }
