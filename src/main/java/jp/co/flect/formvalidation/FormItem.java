@@ -8,26 +8,38 @@ import java.util.LinkedHashMap;
 import jp.co.flect.formvalidation.rules.Rule;
 import jp.co.flect.formvalidation.rules.Required;
 import jp.co.flect.formvalidation.rules.RequiredIf;
+import jp.co.flect.formvalidation.rules.Url;
+import jp.co.flect.formvalidation.rules.Email;
+import jp.co.flect.formvalidation.rules.Number;
+import jp.co.flect.formvalidation.rules.Digits;
+import jp.co.flect.formvalidation.rules.EqualTo;
+import jp.co.flect.formvalidation.rules.Tel;
 import jp.co.flect.formvalidation.rules.RuleManager;
 import jp.co.flect.formvalidation.rules.RuleException;
 import jp.co.flect.formvalidation.rules.ValueList;
 import jp.co.flect.formvalidation.salesforce.SalesforceObjectBuilder;
+import jp.co.flect.salesforce.metadata.CustomField;
 
 public class FormItem {
 	
+	private FormDefinition owner;
 	private String name;
 	private String type;
 	private String label;
+	private boolean follow;
 	
 	private Required required;
 	private RequiredIf requiredIf;
 	private List<Rule> rules = new ArrayList<Rule>();
 	private Map<String, String> sfMap = null;
 	
-	public FormItem(String name, String type) {
+	public FormItem(FormDefinition owner, String name, String type) {
+		this.owner = owner;
 		this.name = name;
 		this.type = type;
 	}
+	
+	public FormDefinition getOwner() { return this.owner;}
 	
 	public String getName() { return this.name;}
 	
@@ -37,7 +49,13 @@ public class FormItem {
 	public String getLabel() { return this.label;}
 	public void setLabel(String s) { this.label = s;}
 	
+	public boolean isFollow() { return this.follow;}
+	
 	public String getDisplayName() { return this.label == null ? this.name : this.label;}
+	
+	public String getSalesforceFieldName() {
+		return "name".equalsIgnoreCase(this.name) ? "Name" : this.name + "__c";
+	}
 	
 	private String isRequired(Map<String, String[]> map) {
 		if (this.required != null) {
@@ -68,6 +86,7 @@ public class FormItem {
 	}
 	
 	public void addRule(Rule rule) {
+		rule.setOwner(this.owner);
 		if (rule instanceof Required) {
 			this.required = (Required)rule;
 		} else if (rule instanceof RequiredIf) {
@@ -109,13 +128,13 @@ public class FormItem {
 		return vl == null ? null : vl.getValues();
 	}
 	
-	public static FormItem fromMap(String name, Map<String, Object> origin, boolean includeSalesforceInfo) throws FormValidationException {
+	public static FormItem fromMap(FormDefinition form, String name, Map<String, Object> origin, boolean includeSalesforceInfo) throws FormValidationException {
 		Map<String, Object> map = new LinkedHashMap<String, Object>(origin);
 		String type = (String)map.remove("type");
 		if (type == null) {
 			type = "text";
 		}
-		FormItem item = new FormItem(name, type);
+		FormItem item = new FormItem(form, name, type);
 		
 		String label = (String)map.remove("label");
 		if (label != null) {
@@ -124,6 +143,10 @@ public class FormItem {
 		List values = (List)map.remove("values");
 		if (values != null) {
 			makeValues(values, item);
+		}
+		Boolean follow = (Boolean)map.remove("follow");
+		if (follow != null) {
+			item.follow = follow.booleanValue();
 		}
 		makeRules(map, item);
 		if (includeSalesforceInfo) {
@@ -205,5 +228,43 @@ public class FormItem {
 		}
 		return false;
 	}
+	
+	public CustomField.FieldType getSalesforceFieldType() {
+		String strType = getType();
+		if ("date".equals(strType)) return CustomField.FieldType.Date;
+		if ("password".equals(strType)) {
+			if (hasRule(EqualTo.class)) return null;
+			return CustomField.FieldType.EncryptedText;
+		}
+		if ("radio".equals(strType)) return CustomField.FieldType.Picklist;
+		if ("textarea".equals(strType)) return CustomField.FieldType.TextArea;
+		if ("checkbox".equals(strType)) {
+			//ToDo 副作用があるので別のメソッドに移動した方が良い
+			LinkedHashMap<String, String> values = getValues();
+			if (values == null || values.size() <= 1) {
+				if (getDisplayName().trim().length() == 0 && values != null && values.size() == 1) {
+					for (String s : values.values()) {
+						setLabel(s);
+					}
+				}
+				return CustomField.FieldType.Checkbox;
+			} else {
+				return CustomField.FieldType.MultiselectPicklist;
+			}
+		}
+		if ("select".equals(strType)) return CustomField.FieldType.Picklist;
+		if ("multiSelect".equals(strType)) return CustomField.FieldType.MultiselectPicklist;
+		if ("file".equals(strType)) return null;
+		if ("hidden".equals(strType)) return null;
+		
+		//text
+		if (hasRule(Url.class)) return CustomField.FieldType.Url;
+		if (hasRule(Email.class)) return CustomField.FieldType.Email;
+		if (hasRule(Number.class) || hasRule(Digits.class)) return CustomField.FieldType.Number;
+		if (hasRule(Tel.class)) return CustomField.FieldType.Phone;
+		
+		return CustomField.FieldType.Text;
+	}
+	
 }
 

@@ -4,7 +4,9 @@ import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 import java.math.BigDecimal;
+import jp.co.flect.formvalidation.FormDefinition;
 import jp.co.flect.formvalidation.FormItem;
+import jp.co.flect.salesforce.metadata.CustomField;
 
 public class RequiredIf extends Rule {
 	
@@ -183,7 +185,7 @@ public class RequiredIf extends Rule {
 	
 	private interface Evaluator {
 		public boolean evaluate(Map<String, String[]> map);
-		public String getSalesforceErrorCondition();
+		public String getSalesforceErrorCondition(FormDefinition form);
 	}
 	
 	private static class Combine implements Evaluator {
@@ -215,7 +217,7 @@ public class RequiredIf extends Rule {
 			return bAnd;
 		}
 		
-		public String getSalesforceErrorCondition() {
+		public String getSalesforceErrorCondition(FormDefinition form) {
 			StringBuilder buf = new StringBuilder();
 			buf.append(bAnd ? "AND(" : "OR(");
 			boolean bFirst = true;
@@ -223,7 +225,8 @@ public class RequiredIf extends Rule {
 				if (!bFirst) {
 					buf.append(",");
 				}
-				buf.append(expr.getSalesforceErrorCondition());
+				buf.append(expr.getSalesforceErrorCondition(form));
+				bFirst = false;
 			}
 			buf.append(")");
 			return buf.toString();
@@ -248,7 +251,7 @@ public class RequiredIf extends Rule {
 			return op.evaluate(targetValues, compareValues);
 		}
 		
-		public String getSalesforceErrorCondition() {
+		public String getSalesforceErrorCondition(FormDefinition form) {
 			if (isEmpty(compareValues)) {
 				String ret = "ISNULL(" + getSalesforceFieldName(name) + ")";
 				if (op instanceof Equal) {
@@ -260,6 +263,16 @@ public class RequiredIf extends Rule {
 				}
 			}
 			String value = compareValues[0];
+			FormItem item = form.getItem(name);
+			if (item != null && op instanceof Equal) {
+				CustomField.FieldType ft = item.getSalesforceFieldType();
+				if (ft == CustomField.FieldType.Picklist) {
+					return "ISPICKVAL(" + getSalesforceFieldName(name) + ", \"" + value + "\")";
+				}
+				if (ft == CustomField.FieldType.MultiselectPicklist) {
+					return "INCLUDES(" + getSalesforceFieldName(name) + ", \"" + value + "\")";
+				}
+			}
 			StringBuilder buf = new StringBuilder();
 			buf.append(getSalesforceFieldName(name)).append(op.getValue());
 			try {
@@ -364,6 +377,6 @@ public class RequiredIf extends Rule {
 	
 	@Override
 	protected String doGetSalesforceErrorCondition(FormItem item, String name) {
-		return "AND(ISNULL(" + name + ")," + this.evaluator.getSalesforceErrorCondition() + ")";
+		return "AND(ISNULL(" + name + ")," + this.evaluator.getSalesforceErrorCondition(getOwner()) + ")";
 	}
 }

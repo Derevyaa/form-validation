@@ -112,9 +112,9 @@ public class FormDefinition {
 					String name = entry.getKey();
 					FormItem item = null;
 					if (entry.getValue() instanceof String) {
-						item = new FormItem(name, (String)entry.getValue());
+						item = new FormItem(form, name, (String)entry.getValue());
 					} else if (entry.getValue() instanceof Map) {
-						item = FormItem.fromMap(name, (Map<String, Object>)entry.getValue(), includeSalesforceInfo);
+						item = FormItem.fromMap(form, name, (Map<String, Object>)entry.getValue(), includeSalesforceInfo);
 					}
 					form.addItem(item);
 				}
@@ -134,6 +134,7 @@ public class FormDefinition {
 			String name = entry.getKey();
 			Rule rule = RuleManager.getRule(name);
 			if (rule != null) {
+				rule.setOwner(form);
 				String message = null;
 				Object value = null;
 				if (entry.getValue() instanceof Map) {

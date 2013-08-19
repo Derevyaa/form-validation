@@ -48,6 +48,17 @@ public class RegexRule extends Rule {
 	
 	@Override
 	protected String doGetSalesforceErrorCondition(FormItem item, String name) {
-		return "NOT(REGEX(" + name + ", \"" + this.pattern.pattern() + "\"))";
+		String regex = this.pattern.pattern();
+		StringBuilder buf = new StringBuilder();
+		buf.append("NOT(REGEX(").append(name).append(", \"");
+		for (int i=0; i<regex.length(); i++) {
+			char c = regex.charAt(i);
+			if (c == '\\') {
+				buf.append('\\');
+			}
+			buf.append(c);
+		}
+		buf.append("\"))");
+		return buf.toString();
 	}
 }

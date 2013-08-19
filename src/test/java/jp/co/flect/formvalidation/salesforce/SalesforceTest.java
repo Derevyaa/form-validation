@@ -8,9 +8,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
+import java.io.IOException;
 import jp.co.flect.salesforce.SalesforceClient;
 import jp.co.flect.salesforce.metadata.MetadataClient;
 import jp.co.flect.salesforce.metadata.CustomObject;
+import jp.co.flect.salesforce.metadata.AsyncResult;
+import jp.co.flect.soap.SoapException;
 import jp.co.flect.io.FileUtils;
 import jp.co.flect.log.Level;
 
@@ -22,6 +25,23 @@ public class SalesforceTest {
 	private static final File METADATA_WSDL = new File("../enq/conf/salesforce/metadata.wsdl");
 	private static final File JSON_FILE = new File("../enq/app/data/sampleForm.json");
 
+	private static void checkStatus(AsyncResult result) throws IOException, SoapException {
+		int interval = 0;
+		while (result.getState() == AsyncResult.AsyncRequestState.Queued || result.getState() == AsyncResult.AsyncRequestState.InProgress) {
+			if (interval > 10) {
+				return;
+			}
+			if (interval > 0) {
+				try {
+					Thread.sleep(interval * 1000);
+				} catch (InterruptedException e) {
+				}
+			}
+			result = META_CLIENT.checkStatusEx(result);
+			interval++;
+		}
+	}
+	
 	@BeforeClass
 	public static void deleteObject() throws Exception{
 		String username = System.getenv().get("SALESFORCE_USERNAME");
@@ -35,7 +55,7 @@ public class SalesforceTest {
 
 		CustomObject obj = new CustomObject();
 		obj.setFullName("ccc__c");
-		META_CLIENT.delete(obj);
+		checkStatus(META_CLIENT.delete(obj));
 	}	
 
 	@Test 
@@ -43,7 +63,7 @@ public class SalesforceTest {
 		SalesforceObjectBuilder builder = new SalesforceObjectBuilder(CLIENT, METADATA_WSDL);
 		builder.getLogger().setLevel(Level.TRACE);
 		SalesforceInfo info = new SalesforceInfo("ccc");
-		info.setLabel("FormBuilderテスト");
+		info.setLabel("FormBuilder Test");
 		String json = FileUtils.readFileAsString(JSON_FILE);
 		builder.generate(info, json);
 	}

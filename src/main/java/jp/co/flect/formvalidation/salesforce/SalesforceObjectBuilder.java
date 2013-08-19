@@ -3,19 +3,28 @@ package jp.co.flect.formvalidation.salesforce;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import jp.co.flect.salesforce.SalesforceClient;
+import jp.co.flect.salesforce.SalesforceException;
 import jp.co.flect.salesforce.metadata.AsyncResult;
 import jp.co.flect.salesforce.metadata.MetadataClient;
+import jp.co.flect.salesforce.metadata.MetadataType;
 import jp.co.flect.salesforce.metadata.CustomObject;
 import jp.co.flect.salesforce.metadata.CustomField;
 import jp.co.flect.salesforce.metadata.ValidationRule;
 import jp.co.flect.salesforce.metadata.BaseMetadata;
 import jp.co.flect.salesforce.metadata.Picklist;
 import jp.co.flect.salesforce.metadata.PicklistValue;
+import jp.co.flect.salesforce.metadata.Layout;
+import jp.co.flect.salesforce.metadata.LayoutSection;
+import jp.co.flect.salesforce.metadata.LayoutColumn;
+import jp.co.flect.salesforce.metadata.LayoutItem;
 import jp.co.flect.formvalidation.FormDefinition;
 import jp.co.flect.formvalidation.FormItem;
 import jp.co.flect.formvalidation.FormValidationException;
@@ -23,12 +32,6 @@ import jp.co.flect.formvalidation.rules.Rule;
 import jp.co.flect.formvalidation.rules.Required;
 import jp.co.flect.formvalidation.rules.RequiredIf;
 import jp.co.flect.formvalidation.rules.MaxLength;
-import jp.co.flect.formvalidation.rules.Url;
-import jp.co.flect.formvalidation.rules.Email;
-import jp.co.flect.formvalidation.rules.Number;
-import jp.co.flect.formvalidation.rules.Digits;
-import jp.co.flect.formvalidation.rules.EqualTo;
-import jp.co.flect.formvalidation.rules.Tel;
 import jp.co.flect.soap.SoapException;
 import jp.co.flect.log.Logger;
 
@@ -73,6 +76,7 @@ public class SalesforceObjectBuilder {
 		checkStatus(this.metaClient.create(obj));
 		
 		//Field
+		Set<String> fieldSet = new HashSet<String>();
 		List<BaseMetadata> list = new ArrayList<BaseMetadata>();
 		for (FormItem item : form.getItems()) {
 			if (item == nameItem) {
@@ -81,8 +85,9 @@ public class SalesforceObjectBuilder {
 			CustomField field = createField(info, item);
 			if (field != null) {
 				list.add(field);
+				fieldSet.add(item.getName());
+				checkList(list);
 			}
-			checkList(list);
 		}
 		if (list.size() > 0) {
 			checkStatus(this.metaClient.create(list));
@@ -98,6 +103,9 @@ public class SalesforceObjectBuilder {
 			}
 		}
 		for (FormItem item : form.getItems()) {
+			if (!fieldSet.contains(item.getName())) {
+				continue;
+			}
 			RequiredIf requiredIf = item.getRule(RequiredIf.class);
 			if (requiredIf != null) {
 				ValidationRule vr = createValidationRule(info, item, ++ruleIndex, requiredIf);
@@ -109,12 +117,47 @@ public class SalesforceObjectBuilder {
 				if (vr != null) {
 					list.add(vr);
 					checkList(list);
+				} else {
+					ruleIndex--;
 				}
 			}
 		}
 		if (list.size() > 0) {
 			checkStatus(this.metaClient.create(list));
 		}
+		//CustomTab
+		/*
+		//Not support
+		//Because relationship of Profile and Application can not create automatically.
+		BaseMetadata tab = new BaseMetadata(MetadataType.CustomTab);
+		tab.set("customObject", true);
+		tab.setFullName(info.getObjectName());
+		tab.set("mobileReady", false);
+		tab.set("motif", "Custom6: Triangle");
+		checkStatus(this.metaClient.create(tab));
+		*/
+		//Layout
+		Layout layout = new Layout();
+		layout.setFullName(info.getObjectName() + ".test");
+		LayoutSection section = new LayoutSection();
+		section.setStyle(LayoutSection.LayoutSectionStyle.TwoColumnsLeftToRight);
+		layout.addLayoutSection(section);
+		
+		LayoutColumn column = null;
+		for (FormItem item : form.getItems()) {
+			if (!fieldSet.contains(item.getName())) {
+				continue;
+			}
+			if (column == null || !item.isFollow()) {
+				column = new LayoutColumn();
+				section.addLayoutColumn(column);
+			}
+			LayoutItem li = new LayoutItem();
+			li.setField(item.getSalesforceFieldName());
+			li.setBehavior(item.hasRule(Required.class) ? LayoutItem.UiBehavior.Required : LayoutItem.UiBehavior.Edit);
+			column.addLayoutItem(li);
+		}
+		checkStatus(this.metaClient.create(layout));
 	}
 	
 	private ValidationRule createValidationRule(SalesforceInfo info, FormItem item, int ruleIndex, Rule rule) {
@@ -123,10 +166,13 @@ public class SalesforceObjectBuilder {
 			return null;
 		}
 		ValidationRule vr = new ValidationRule();
-		String ruleName = (item == null ? "commonRule" : item.getName()) + ruleIndex;
+		String ruleName = (item == null ? "commonRule" : item.getName()) + "_" + ruleIndex;
 		vr.setFullName(info.getObjectName() + "." + ruleName);
 		vr.setErrorConditionFormula(formula);
 		vr.setErrorMessage(rule.getMessage());
+		if (item != null) {
+			vr.setErrorDisplayField(item.getSalesforceFieldName());
+		}
 		return vr;
 	}
 	
@@ -138,12 +184,17 @@ public class SalesforceObjectBuilder {
 	}
 	
 	private void checkStatus(List<AsyncResult> list) throws IOException, SoapException {
-		checkStatus(list.get(0));
-	}
-	
-	private void checkStatus(AsyncResult result) throws IOException, SoapException {
 		int interval = 0;
-		while (result.getState() == AsyncResult.AsyncRequestState.Queued || result.getState() == AsyncResult.AsyncRequestState.InProgress) {
+		while (true) {
+			int cnt = 0;
+			for (AsyncResult result : list) {
+				if (result.getState() == AsyncResult.AsyncRequestState.Queued || result.getState() == AsyncResult.AsyncRequestState.InProgress) {
+					cnt++;
+				}
+			}
+			if (cnt == 0) {
+				break;
+			}
 			if (interval > 10) {
 				return;
 			}
@@ -153,18 +204,34 @@ public class SalesforceObjectBuilder {
 				} catch (InterruptedException e) {
 				}
 			}
-			result = this.metaClient.checkStatus(result);
+			list = this.metaClient.checkStatusEx(list);
 			interval++;
+		}
+		StringBuilder buf = new StringBuilder();
+		for (AsyncResult result : list) {
+			if (result.getState() == AsyncResult.AsyncRequestState.Error) {
+				if (buf.length() > 0) {
+					buf.append("\n");
+				}
+				buf.append(result.getStatusCode()).append(": ").append(result.getMessage());
+			}
+		}
+		if (buf.length() > 0) {
+			throw new SalesforceException(buf.toString());
 		}
 	}
 	
+	private void checkStatus(AsyncResult result) throws IOException, SoapException {
+		checkStatus(Arrays.asList(result));
+	}
+	
 	private CustomField createField(SalesforceInfo info, FormItem item) {
-		CustomField.FieldType type = getFieldType(item);
+		CustomField.FieldType type = item.getSalesforceFieldType();
 		if (type == null) {
 			return null;
 		}
 		boolean lengthAdded = type != CustomField.FieldType.Text && type != CustomField.FieldType.EncryptedText;
-		CustomField field = new CustomField(type, info.getObjectName() + "." + item.getName() + "__c", item.getDisplayName());
+		CustomField field = new CustomField(type, info.getObjectName() + "." + item.getSalesforceFieldName(), item.getDisplayName());
 		if (item.getSalesforceMap() != null) {
 			for (Map.Entry<String, String> entry : item.getSalesforceMap().entrySet()) {
 				field.set(entry.getKey(), entry.getValue());
@@ -205,41 +272,6 @@ public class SalesforceObjectBuilder {
 			field.setPicklist(picklist);
 		}
 		return field;
-	}
-	
-	private CustomField.FieldType getFieldType(FormItem item) {
-		String strType = item.getType();
-		if ("date".equals(strType)) return CustomField.FieldType.Date;
-		if ("password".equals(strType)) {
-			if (item.hasRule(EqualTo.class)) return null;
-			return CustomField.FieldType.EncryptedText;
-		}
-		if ("radio".equals(strType)) return CustomField.FieldType.Picklist;
-		if ("textarea".equals(strType)) return CustomField.FieldType.TextArea;
-		if ("checkbox".equals(strType)) {
-			LinkedHashMap<String, String> values = item.getValues();
-			if (values == null || values.size() <= 1) {
-				if (item.getDisplayName().trim().length() == 0 && values != null && values.size() == 1) {
-					for (String s : values.values()) {
-						item.setLabel(s);
-					}
-				}
-				return CustomField.FieldType.Checkbox;
-			} else {
-				return CustomField.FieldType.MultiselectPicklist;
-			}
-		}
-		if ("select".equals(strType)) return CustomField.FieldType.Picklist;
-		if ("multiSelect".equals(strType)) return CustomField.FieldType.MultiselectPicklist;
-		if ("file".equals(strType)) return null;
-		
-		//text
-		if (item.hasRule(Url.class)) return CustomField.FieldType.Url;
-		if (item.hasRule(Email.class)) return CustomField.FieldType.Email;
-		if (item.hasRule(Number.class) || item.hasRule(Digits.class)) return CustomField.FieldType.Number;
-		if (item.hasRule(Tel.class)) return CustomField.FieldType.Phone;
-		
-		return CustomField.FieldType.Text;
 	}
 	
 	private static String getString(Map<String, Object> origin, String key, String category) {

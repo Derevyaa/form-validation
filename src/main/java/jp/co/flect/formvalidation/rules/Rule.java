@@ -3,6 +3,7 @@ package jp.co.flect.formvalidation.rules;
 import java.util.Map;
 import java.text.MessageFormat;
 import jp.co.flect.formvalidation.FormValidationException;
+import jp.co.flect.formvalidation.FormDefinition;
 import jp.co.flect.formvalidation.FormItem;
 
 public abstract class Rule implements Cloneable {
@@ -31,8 +32,12 @@ public abstract class Rule implements Cloneable {
 	
 	private String message;
 	private Object[] messageParams = null;
+	private FormDefinition owner = null;
 	
 	public boolean isBooleanRule() { return false;}
+	
+	public FormDefinition getOwner() { return this.owner;}
+	public void setOwner(FormDefinition v) { this.owner = v;}
 	
 	public abstract void build(Object value) throws RuleException;
 	
