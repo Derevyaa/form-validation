@@ -137,6 +137,8 @@ public class SalesforceObjectBuilder {
 		checkStatus(this.metaClient.create(tab));
 		*/
 		//Layout
+		//ToDo Not implemented yet
+		/*
 		Layout layout = new Layout();
 		layout.setFullName(info.getObjectName() + ".test");
 		LayoutSection section = new LayoutSection();
@@ -158,6 +160,7 @@ public class SalesforceObjectBuilder {
 			column.addLayoutItem(li);
 		}
 		checkStatus(this.metaClient.create(layout));
+		*/
 	}
 	
 	private ValidationRule createValidationRule(SalesforceInfo info, FormItem item, int ruleIndex, Rule rule) {
