@@ -24,6 +24,15 @@ public class ValidationResult {
 	public LinkedHashMap<FormItem, List<String>> getErrors() { return this.errors;}
 	public List<String> getCommonErrors() { return this.commonErrors;}
 	
+	public List<String> getAllErrors() {
+		List<String> list = new ArrayList<String>();
+		for (List<String> l : this.errors.values()) {
+			list.addAll(l);
+		}
+		list.addAll(this.commonErrors);
+		return list;
+	}
+	
 	public boolean hasErrors() { return this.errors.size() + this.commonErrors.size() > 0;}
 	
 	public boolean isSuccess() { return !hasErrors();}
