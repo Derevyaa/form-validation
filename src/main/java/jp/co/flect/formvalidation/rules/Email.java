@@ -2,7 +2,6 @@ package jp.co.flect.formvalidation.rules;
 
 import java.math.BigDecimal;
 import jp.co.flect.formvalidation.FormValidationException;
-import jp.co.flect.formvalidation.FormItem;
 
 public class Email extends RegexRule {
 	
@@ -14,7 +13,4 @@ public class Email extends RegexRule {
 		);
 	}
 	
-	protected String doGetSalesforceErrorCondition(FormItem item, String name) {
-		return null;
-	}
 }

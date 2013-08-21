@@ -28,6 +28,8 @@ import jp.co.flect.salesforce.metadata.LayoutItem;
 import jp.co.flect.formvalidation.FormDefinition;
 import jp.co.flect.formvalidation.FormItem;
 import jp.co.flect.formvalidation.FormValidationException;
+import jp.co.flect.formvalidation.rules.Email;
+import jp.co.flect.formvalidation.rules.Url;
 import jp.co.flect.formvalidation.rules.Rule;
 import jp.co.flect.formvalidation.rules.Required;
 import jp.co.flect.formvalidation.rules.RequiredIf;
@@ -40,6 +42,9 @@ public class SalesforceObjectBuilder {
 	private SalesforceClient client;
 	private MetadataClient metaClient;
 	
+	private boolean useUrlField = true;
+	private boolean useEmailField = true;
+	
 	public SalesforceObjectBuilder(SalesforceClient client, File metadataWsdl) {
 		this.client = client;
 		try {
@@ -50,6 +55,13 @@ public class SalesforceObjectBuilder {
 	}
 	
 	public Logger getLogger() { return this.metaClient.getLogger();}
+	
+	public boolean isUseEmailField() { return this.useEmailField;}
+	public void setUseEmailField(boolean b) { this.useEmailField = b;}
+	
+	public boolean isUseUrlField() { return this.useUrlField;}
+	public void setUseUrlField(boolean b) { this.useUrlField = b;}
+	
 	
 	public void generate(SalesforceInfo info, String jsonStr) throws FormValidationException, IOException, SoapException {
 		FormDefinition form = FormDefinition.fromJson(jsonStr, true);
@@ -164,6 +176,12 @@ public class SalesforceObjectBuilder {
 	}
 	
 	private ValidationRule createValidationRule(SalesforceInfo info, FormItem item, int ruleIndex, Rule rule) {
+		if (this.useEmailField && rule instanceof Email) {
+			return null;
+		}
+		if (this.useUrlField && rule instanceof Url) {
+			return null;
+		}
 		String formula = rule.getSalesforceErrorCondition(item);
 		if (formula == null) {
 			return null;
@@ -232,6 +250,18 @@ public class SalesforceObjectBuilder {
 		CustomField.FieldType type = item.getSalesforceFieldType();
 		if (type == null) {
 			return null;
+		}
+		if (type == CustomField.FieldType.Email && !this.useEmailField) {
+			type = CustomField.FieldType.Text;
+		}
+		if (type == CustomField.FieldType.Url && !this.useUrlField) {
+			type = CustomField.FieldType.Text;
+		}
+		if (type == CustomField.FieldType.Text) {
+			MaxLength maxLen = item.getRule(MaxLength.class);
+			if (maxLen != null && maxLen.length() > 255) {
+				type = CustomField.FieldType.LongTextArea;
+			}
 		}
 		boolean lengthAdded = type != CustomField.FieldType.Text && type != CustomField.FieldType.EncryptedText;
 		CustomField field = new CustomField(type, info.getObjectName() + "." + item.getSalesforceFieldName(), item.getDisplayName());

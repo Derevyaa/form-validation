@@ -61,6 +61,8 @@ public class SalesforceTest {
 	@Test 
 	public void test() throws Exception {
 		SalesforceObjectBuilder builder = new SalesforceObjectBuilder(CLIENT, METADATA_WSDL);
+		builder.setUseEmailField(false);
+		builder.setUseUrlField(false);
 		builder.getLogger().setLevel(Level.TRACE);
 		SalesforceInfo info = new SalesforceInfo("ccc");
 		info.setLabel("FormBuilder Test");
