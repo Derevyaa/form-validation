@@ -73,6 +73,7 @@ public class SalesforceObjectBuilder {
 		CustomObject obj = new CustomObject();
 		obj.setFullName(info.getObjectName());
 		obj.setLabel(info.getLabel());
+		obj.setPluralLabel(info.getLabel());
 		if (info.getDescription() != null) {
 			obj.setDescription(info.getDescription());
 		}
