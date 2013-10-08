@@ -12,8 +12,13 @@ import jp.co.flect.formvalidation.rules.RuleManager;
 
 public class FormDefinition {
 	
+	private String title;
+	
 	private LinkedHashMap<String, FormItem> items;
 	private List<Rule> rules;
+	
+	public String getTitle() { return this.title;}
+	public void setTitle(String s) { this.title = s;}
 	
 	public List<FormItem> getItems() { return new ArrayList<FormItem>(this.items.values());}
 	public void setItems(List<FormItem> list) { 
@@ -106,6 +111,7 @@ public class FormDefinition {
 			LinkedHashMap<String, Object> map = JsonUtils.fromJson(json, LinkedHashMap.class);
 			
 			FormDefinition form = new FormDefinition();
+			form.setTitle((String)map.get("title"));
 			Map<String, Object> items = (Map<String, Object>)map.get("items");
 			if (items != null) {
 				for (Map.Entry<String, Object> entry : items.entrySet()) {

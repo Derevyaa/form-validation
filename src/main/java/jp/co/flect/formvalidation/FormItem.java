@@ -57,6 +57,10 @@ public class FormItem {
 		return "name".equalsIgnoreCase(this.name) ? "Name" : this.name + "__c";
 	}
 	
+	public boolean isRequired() {
+		return this.required != null;
+	}
+	
 	private String isRequired(Map<String, String[]> map) {
 		if (this.required != null) {
 			return this.required.getMessage();
