@@ -4,7 +4,7 @@
 
 	<groupId>jp.co.flect</groupId>
 	<artifactId>form-validation</artifactId>
-	<version>1.1-SNAPSHOT</version>
+	<version>1.0.1</version>
 	<packaging>jar</packaging>
 
 	<name>form-validation</name>
@@ -107,7 +107,8 @@
 					<outputDirectory>${env.MAVEN_LOCAL_REPOSITORY}</outputDirectory>
 					<branch>refs/heads/gh-pages</branch>
 					<includes>
-						<include>**/*</include>
+						<include>jp/**/*</include>
+						<include>.nojekyll</include>
 					</includes>
 					<repositoryName>maven-repo</repositoryName>
 					<repositoryOwner>flect</repositoryOwner>
