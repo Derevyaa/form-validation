@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 import jp.co.flect.json.JsonUtils;
 import jp.co.flect.json.JsonException;
@@ -16,9 +17,12 @@ public class FormDefinition {
 	
 	private LinkedHashMap<String, FormItem> items;
 	private List<Rule> rules;
+	private HashMap<String, String> options = new HashMap<String, String>();
 	
-	public String getTitle() { return this.title;}
-	public void setTitle(String s) { this.title = s;}
+	public String getOption(String name) { return this.options.get(name);}
+	public void setOption(String name, String value) { this.options.put(name, value);}
+	
+	public String getTitle() { return getOption("title");}
 	
 	public List<FormItem> getItems() { return new ArrayList<FormItem>(this.items.values());}
 	public void setItems(List<FormItem> list) { 
@@ -111,7 +115,13 @@ public class FormDefinition {
 			LinkedHashMap<String, Object> map = JsonUtils.fromJson(json, LinkedHashMap.class);
 			
 			FormDefinition form = new FormDefinition();
-			form.setTitle((String)map.get("title"));
+			for (Map.Entry<String, Object> entry : map.entrySet()) {
+				String key = entry.getKey();
+				if (key.equals("items") || key.equals("rules") || entry.getValue() == null) {
+					continue;
+				}
+				form.setOption(key, entry.getValue().toString());
+			}
 			Map<String, Object> items = (Map<String, Object>)map.get("items");
 			if (items != null) {
 				for (Map.Entry<String, Object> entry : items.entrySet()) {
